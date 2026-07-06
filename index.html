@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tooling Room · Buscador de Stenciles &amp; Dummys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14171a;
+    --panel: #1e2226;
+    --panel-2: #262b30;
+    --line: #3a4046;
+    --steel: #8b959c;
+    --safety: #a8cf45;
+    --safety-dim: #6f8a2c;
+    --tag: #f2efe4;
+    --tag-ink: #17181a;
+    --warn: #e2a33d;
+    --danger: #d9564a;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    background-image:
+      linear-gradient(180deg, rgba(255,255,255,0.02), transparent 200px),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 40px);
+    color: #e7e6e1;
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+  }
+  h1,h2,h3, .display{
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- LOGIN ---------- */
+  #loginScreen{
+    min-height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+  }
+  .login-card{
+    width: 100%;
+    max-width: 380px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 36px 30px 30px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .login-card::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0; height:6px;
+    background: repeating-linear-gradient(120deg, var(--safety) 0 18px, var(--tag-ink) 18px 20px);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .login-eyebrow{
+    color: var(--safety);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+  }
+  .login-card h1{
+    font-size: 30px;
+    margin: 0 0 4px;
+    color: #fff;
+  }
+  .login-sub{
+    color: var(--steel);
+    font-size: 13px;
+    margin-bottom: 26px;
+    line-height:1.5;
+  }
+  .field-label{
+    font-size: 11px;
+    color: var(--steel);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display:block;
+    margin-bottom: 8px;
+  }
+  input[type="password"], input[type="text"]{
+    width:100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 0.15em;
+  }
+  input:focus{ outline: 2px solid var(--safety); outline-offset: 1px; border-color: var(--safety); }
+  .btn{
+    border: none;
+    cursor: pointer;
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{
+    background: var(--safety);
+    color: #10130a;
+    padding: 13px 18px;
+    width: 100%;
+    margin-top: 20px;
+    font-size: 15px;
+  }
+  .btn-primary:hover{ background: #b8de5c; }
+  .btn-ghost{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--steel);
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  .btn-ghost:hover{ border-color: var(--safety); color: var(--safety); }
+  .btn-danger{ background: var(--danger); color:#fff; padding: 9px 14px; font-size: 13px;}
+
+  /* ---------- ERROR MODAL ---------- */
+  .modal-overlay{
+    position: fixed; inset:0;
+    background: rgba(0,0,0,0.65);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background: var(--panel);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    max-width: 340px;
+    width:100%;
+    padding: 26px;
+    text-align:center;
+    animation: shake .35s ease;
+  }
+  @keyframes shake{
+    10%,90%{ transform: translateX(-2px); }
+    20%,80%{ transform: translateX(4px); }
+    30%,50%,70%{ transform: translateX(-8px); }
+    40%,60%{ transform: translateX(8px); }
+  }
+  .modal-box .stripe{
+    width:44px; height:44px; margin:0 auto 14px;
+    background: var(--danger);
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 24px; font-weight:700;
+    border-radius: 50%;
+    font-family:'Oswald', sans-serif;
+  }
+  .modal-box h3{ color:#fff; margin: 0 0 8px; font-size: 18px;}
+  .modal-box p{ color: var(--steel); font-size: 13px; margin: 0 0 18px; line-height:1.5;}
+
+  /* generic modal for forms */
+  .form-modal{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    max-width: 420px;
+    width:100%;
+    padding: 24px;
+  }
+  .form-modal h3{ color:#fff; margin:0 0 4px; font-size:18px;}
+  .form-modal .sub{ color:var(--steel); font-size:12px; margin-bottom:18px;}
+  .form-row{ margin-bottom: 14px; }
+  .form-actions{ display:flex; gap:10px; margin-top:18px; }
+  .form-actions .btn{ flex:1; }
+
+  /* ---------- APP SHELL ---------- */
+  #app{ display:none; min-height:100vh; }
+  #app.show{ display:block; }
+
+  header.top{
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    padding: 18px 26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    position: sticky;
+    top:0;
+    z-index: 50;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand .stripe-mark{
+    width: 8px; height: 34px;
+    background: repeating-linear-gradient(180deg, var(--safety) 0 8px, var(--tag-ink) 8px 10px);
+  }
+  .brand h1{ font-size: 20px; margin:0; color:#fff; }
+  .brand .tag-sub{ font-size: 11px; color: var(--steel); letter-spacing: 0.12em; }
+
+  nav.tabs{ display:flex; gap:4px; background: var(--bg); padding:4px; border-radius: var(--radius); border:1px solid var(--line); }
+  nav.tabs button{
+    background:transparent; border:none; color: var(--steel);
+    font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.08em;
+    font-size: 13px; padding: 9px 18px; border-radius: 2px; cursor:pointer;
+  }
+  nav.tabs button.active{ background: var(--safety); color:#10130a; }
+
+  main{ padding: 26px; max-width: 1180px; margin: 0 auto; }
+
+  .toolbar{
+    display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom: 20px;
+  }
+  .search-wrap{ position:relative; flex: 1 1 320px; }
+  .search-wrap input{ padding-left: 40px; font-size: 14px; letter-spacing: 0.05em;}
+  .search-wrap .ico{ position:absolute; left:13px; top:50%; transform:translateY(-50%); color: var(--steel); font-size:15px; }
+  .count-pill{ color: var(--steel); font-size: 12px; white-space:nowrap; }
+  .count-pill b{ color: var(--safety); }
+
+  .grid-head{
+    display:grid;
+    grid-template-columns: 140px 1fr 1fr 90px;
+    padding: 10px 16px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--steel);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+  }
+  .rows{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .row-item{
+    display:grid;
+    grid-template-columns: 140px 1fr 1fr 90px;
+    align-items:center;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow:hidden;
+    transition: border-color .15s ease;
+  }
+  .row-item:hover{ border-color: var(--safety-dim); }
+  .cell{ padding: 14px 16px; }
+  .cell.loc{
+    background: var(--tag);
+    color: var(--tag-ink);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    height: 100%;
+    display:flex; align-items:center;
+    border-right: 2px dashed rgba(0,0,0,0.15);
+  }
+  .cell .field-tag{ font-size:9px; letter-spacing:.14em; color:var(--steel); display:block; margin-bottom:3px; text-transform:uppercase;}
+  .cell .val{ font-size: 14px; color:#fff; letter-spacing:0.03em; word-break:break-all; }
+  .row-actions{ display:flex; gap:6px; justify-content:flex-end; padding-right:12px; }
+  .icon-btn{
+    background:transparent; border:1px solid var(--line); color:var(--steel);
+    width:30px; height:30px; border-radius:3px; cursor:pointer; font-size:13px;
+  }
+  .icon-btn:hover{ border-color: var(--safety); color: var(--safety); }
+  .icon-btn.del:hover{ border-color: var(--danger); color: var(--danger); }
+
+  .empty-state{
+    text-align:center;
+    padding: 60px 20px;
+    color: var(--steel);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    margin-top: 16px;
+  }
+  .empty-state .display{ color:#fff; font-size:20px; margin-bottom:8px; }
+  .empty-state p{ font-size:13px; max-width:420px; margin: 0 auto 18px; line-height:1.6;}
+
+  .add-btn{
+    background: var(--safety); color:#10130a; border:none; padding: 12px 20px;
+    font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.08em; font-size:13px;
+    border-radius: var(--radius); cursor:pointer;
+  }
+  .add-btn:hover{ background:#b8de5c; }
+
+  .dummies-banner{
+    background: var(--panel-2);
+    border: 1px solid var(--warn);
+    border-left: 4px solid var(--warn);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    color: #eddba0;
+    line-height: 1.6;
+  }
+
+  footer{
+    text-align:center; color: var(--steel); font-size: 11px; padding: 30px 20px 40px; letter-spacing:.05em;
+  }
+
+  @media (max-width: 720px){
+    .grid-head{ display:none; }
+    .row-item{ grid-template-columns: 1fr; }
+    .cell.loc{ border-right:none; border-bottom: 2px dashed rgba(0,0,0,0.15); }
+    .row-actions{ padding: 10px 16px 14px; justify-content:flex-start; }
+    header.top{ padding: 14px 16px; }
+    main{ padding: 16px; }
+  }
+
+  ::selection{ background: var(--safety); color:#10130a; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-eyebrow">R2 / L1 &mdash; ACCESO RESTRINGIDO</div>
+    <h1>Tooling Room</h1>
+    <div class="login-sub">Ingresa la contraseña para acceder al buscador de stenciles y dummys.</div>
+    <label class="field-label" for="pwInput">Contraseña</label>
+    <input type="password" id="pwInput" placeholder="••••" maxlength="10" autocomplete="off">
+    <button class="btn btn-primary" onclick="tryLogin()">Ingresar</button>
+  </div>
+</div>
+
+<!-- ERROR MODAL -->
+<div class="modal-overlay" id="errorModal">
+  <div class="modal-box">
+    <div class="stripe">!</div>
+    <h3>Contraseña incorrecta</h3>
+    <p>La contraseña que ingresaste no es válida. Verifica e intenta de nuevo.</p>
+    <button class="btn btn-primary" style="margin-top:0;" onclick="closeErrorModal()">Entendido</button>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="formModal">
+  <div class="form-modal">
+    <h3 id="formTitle">Agregar Stencil</h3>
+    <div class="sub">Captura la ubicación, número de parte y JOB tal como aparecen en la etiqueta.</div>
+    <input type="hidden" id="editId">
+    <div class="form-row">
+      <label class="field-label">Ubicación (ej. R2/L1/1)</label>
+      <input type="text" id="fLoc" placeholder="R2/L1/1">
+    </div>
+    <div class="form-row">
+      <label class="field-label">No. de Parte</label>
+      <input type="text" id="fPart" placeholder="2858166102.100">
+    </div>
+    <div class="form-row">
+      <label class="field-label">JOB</label>
+      <input type="text" id="fJob" placeholder="S24A915165B">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeFormModal()">Cancelar</button>
+      <button class="btn btn-primary" style="margin-top:0;" onclick="saveEntry()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <div class="stripe-mark"></div>
+      <div>
+        <h1>Tooling Room</h1>
+        <div class="tag-sub">Buscador de Stenciles &amp; Dummys</div>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button id="tabStencils" class="active" onclick="switchTab('stencils')">Stenciles</button>
+      <button id="tabDummies" onclick="switchTab('dummies')">Dummys</button>
+    </nav>
+    <button class="btn btn-ghost" onclick="logout()">Salir</button>
+  </header>
+
+  <main>
+    <!-- STENCILS VIEW -->
+    <div id="view-stencils">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="ico">&#128269;</span>
+          <input type="text" id="searchStencils" placeholder="Buscar por ubicación, no. de parte o JOB..." oninput="renderStencils()">
+        </div>
+        <div class="count-pill"><b id="countStencils">0</b> resultados</div>
+        <button class="add-btn" onclick="openFormModal('stencils')">+ Agregar Stencil</button>
+      </div>
+      <div class="grid-head">
+        <div>Ubicación</div><div>No. de Parte</div><div>JOB</div><div></div>
+      </div>
+      <div class="rows" id="rowsStencils"></div>
+      <div class="empty-state" id="emptyStencils" style="display:none;">
+        <div class="display">Sin resultados</div>
+        <p>No hay stenciles que coincidan con tu búsqueda. Intenta con otra ubicación, parte o JOB.</p>
+      </div>
+    </div>
+
+    <!-- DUMMIES VIEW -->
+    <div id="view-dummies" style="display:none;">
+      <div class="dummies-banner">
+        Este apartado de <b>Dummys</b> está listo para usarse, pero aún no tiene registros cargados. Agrega el primero con el botón de abajo.
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="ico">&#128269;</span>
+          <input type="text" id="searchDummies" placeholder="Buscar por ubicación, no. de parte o JOB..." oninput="renderDummies()">
+        </div>
+        <div class="count-pill"><b id="countDummies">0</b> resultados</div>
+        <button class="add-btn" onclick="openFormModal('dummies')">+ Agregar Dummy</button>
+      </div>
+      <div class="grid-head">
+        <div>Ubicación</div><div>No. de Parte</div><div>JOB</div><div></div>
+      </div>
+      <div class="rows" id="rowsDummies"></div>
+      <div class="empty-state" id="emptyDummies" style="display:none;">
+        <div class="display">Aún no hay dummys</div>
+        <p>Cuando tengas la información de los dummys, agrégalos aquí y podrás buscarlos igual que los stenciles.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>TOOLING ROOM · R2/L1 · Datos guardados localmente en este navegador</footer>
+</div>
+
+<script>
+const PASSWORD = "9062";
+
+// Seed data: leído de la foto de la rejilla R2/L1. Verifica cada etiqueta contra el rack físico,
+// la letra manuscrita en algunas etiquetas puede tener errores de transcripción.
+const SEED_STENCILS = [
+  {loc:"R2/L1/1",  part:"2858166102.100", job:"S24A915165B"},
+  {loc:"R2/L1/2",  part:"2858150810.100", job:"S21K916654B"},
+  {loc:"R2/L1/3",  part:"2858250604.100", job:"S04G560464B"},
+  {loc:"R2/L1/4",  part:"2858261104.100", job:"S11228431B"},
+  {loc:"R2/L1/5",  part:"2858199306.100", job:"E26C23129B"},
+  {loc:"R2/L1/6",  part:"2858260004.100", job:"S04E236035B"},
+  {loc:"R2/L1/7",  part:"2858226104.100", job:"S19G226030B"},
+  {loc:"R2/L1/8",  part:"2858287702.100", job:"S18E669365B"},
+  {loc:"R2/L1/9",  part:"2858279802.100", job:"S13L231733B"},
+  {loc:"R2/L1/10", part:"2858187574.100", job:"S12E223878B"},
+  {loc:"R2/L1/11", part:"2858154603.100", job:"S05F337991B"},
+  {loc:"R2/L1/12", part:"2858287602.100", job:"E25L030796"},
+  {loc:"R2/L1/13", part:"2858153813.100", job:"S09H451474B"},
+  {loc:"R2/L1/14", part:"2858156204.100", job:"S18E669363B"},
+  {loc:"R2/L1/15", part:"2858491002.100", job:"S18E669382B"},
+  {loc:"R2/L1/16", part:"2858175701.100", job:"E26E20182B"},
+  {loc:"R2/L1/17", part:"2858332602.100", job:"F26E20182B"},
+  {loc:"R2/L1/18", part:"2858214702.100", job:"S19F610323B"},
+  {loc:"R2/L1/19", part:"2858259301.100", job:"S28L344899B"},
+  {loc:"R2/L1/20", part:"2858236103.100", job:"S05A345138B"},
+  {loc:"R2/L1/21", part:"2858069543.100", job:"S15K230774B"},
+  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B"}
+];
+
+function loadData(key, seed){
+  const raw = localStorage.getItem(key);
+  if(raw){ try{ return JSON.parse(raw); }catch(e){ return seed.slice(); } }
+  localStorage.setItem(key, JSON.stringify(seed));
+  return seed.slice();
+}
+function saveData(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
+
+let stencils = loadData("tr_stencils", SEED_STENCILS);
+let dummies  = loadData("tr_dummies", []);
+let currentTab = "stencils";
+let formContext = "stencils";
+
+// ---------- LOGIN ----------
+function tryLogin(){
+  const val = document.getElementById('pwInput').value.trim();
+  if(val === PASSWORD){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+    sessionStorage.setItem('tr_auth', '1');
+    renderStencils();
+    renderDummies();
+  } else {
+    document.getElementById('errorModal').classList.add('show');
+  }
+}
+function closeErrorModal(){
+  document.getElementById('errorModal').classList.remove('show');
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwInput').focus();
+}
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key === 'Enter') tryLogin(); });
+
+function logout(){
+  sessionStorage.removeItem('tr_auth');
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('pwInput').value = '';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if(sessionStorage.getItem('tr_auth') === '1'){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+    renderStencils();
+    renderDummies();
+  }
+});
+
+// ---------- TABS ----------
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tabStencils').classList.toggle('active', tab==='stencils');
+  document.getElementById('tabDummies').classList.toggle('active', tab==='dummies');
+  document.getElementById('view-stencils').style.display = tab==='stencils' ? 'block' : 'none';
+  document.getElementById('view-dummies').style.display = tab==='dummies' ? 'block' : 'none';
+}
+
+// ---------- RENDER ----------
+function matches(item, q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  return item.loc.toLowerCase().includes(q) ||
+         item.part.toLowerCase().includes(q) ||
+         item.job.toLowerCase().includes(q);
+}
+
+function rowHTML(item, kind){
+  return `
+    <div class="row-item">
+      <div class="cell loc">${escapeHtml(item.loc)}</div>
+      <div class="cell"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
+      <div class="cell"><span class="field-tag">JOB</span><span class="val">${escapeHtml(item.job)}</span></div>
+      <div class="cell row-actions">
+        <button class="icon-btn" title="Editar" onclick="editEntry('${kind}','${item.id}')">&#9998;</button>
+        <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('${kind}','${item.id}')">&#10005;</button>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function ensureIds(arr){
+  arr.forEach(it => { if(!it.id) it.id = 'id_'+Math.random().toString(36).slice(2,10); });
+  return arr;
+}
+
+function renderStencils(){
+  ensureIds(stencils);
+  const q = document.getElementById('searchStencils').value;
+  const filtered = stencils.filter(it => matches(it, q));
+  document.getElementById('countStencils').textContent = filtered.length;
+  document.getElementById('rowsStencils').innerHTML = filtered.map(it => rowHTML(it,'stencils')).join('');
+  document.getElementById('emptyStencils').style.display = filtered.length ? 'none' : 'block';
+}
+
+function renderDummies(){
+  ensureIds(dummies);
+  const q = document.getElementById('searchDummies').value;
+  const filtered = dummies.filter(it => matches(it, q));
+  document.getElementById('countDummies').textContent = filtered.length;
+  document.getElementById('rowsDummies').innerHTML = filtered.map(it => rowHTML(it,'dummies')).join('');
+  document.getElementById('emptyDummies').style.display = filtered.length ? 'none' : 'block';
+}
+
+// ---------- ADD / EDIT / DELETE ----------
+function openFormModal(kind, editItem){
+  formContext = kind;
+  document.getElementById('formTitle').textContent = editItem
+    ? (kind==='stencils' ? 'Editar Stencil' : 'Editar Dummy')
+    : (kind==='stencils' ? 'Agregar Stencil' : 'Agregar Dummy');
+  document.getElementById('editId').value = editItem ? editItem.id : '';
+  document.getElementById('fLoc').value = editItem ? editItem.loc : '';
+  document.getElementById('fPart').value = editItem ? editItem.part : '';
+  document.getElementById('fJob').value = editItem ? editItem.job : '';
+  document.getElementById('formModal').classList.add('show');
+  setTimeout(()=>document.getElementById('fLoc').focus(), 50);
+}
+function closeFormModal(){
+  document.getElementById('formModal').classList.remove('show');
+}
+
+function saveEntry(){
+  const loc = document.getElementById('fLoc').value.trim();
+  const part = document.getElementById('fPart').value.trim();
+  const job = document.getElementById('fJob').value.trim();
+  if(!loc || !part || !job){ alert('Completa ubicación, no. de parte y JOB.'); return; }
+  const id = document.getElementById('editId').value;
+  const arr = formContext === 'stencils' ? stencils : dummies;
+
+  if(id){
+    const idx = arr.findIndex(x => x.id === id);
+    if(idx > -1){ arr[idx] = {...arr[idx], loc, part, job}; }
+  } else {
+    arr.push({id: 'id_'+Math.random().toString(36).slice(2,10), loc, part, job});
+  }
+  saveData(formContext === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
+  closeFormModal();
+  formContext === 'stencils' ? renderStencils() : renderDummies();
+}
+
+function editEntry(kind, id){
+  const arr = kind === 'stencils' ? stencils : dummies;
+  const item = arr.find(x => x.id === id);
+  if(item) openFormModal(kind, item);
+}
+
+function deleteEntry(kind, id){
+  if(!confirm('¿Eliminar este registro?')) return;
+  if(kind === 'stencils'){
+    stencils = stencils.filter(x => x.id !== id);
+    saveData('tr_stencils', stencils);
+    renderStencils();
+  } else {
+    dummies = dummies.filter(x => x.id !== id);
+    saveData('tr_dummies', dummies);
+    renderDummies();
+  }
+}
+</script>
+</body>
+</html>
