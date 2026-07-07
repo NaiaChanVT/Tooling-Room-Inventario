@@ -234,31 +234,63 @@
   .count-pill{ color: var(--steel); font-size: 12px; white-space:nowrap; }
   .count-pill b{ color: var(--safety); }
 
-  .grid-head{
-    display:grid;
-    grid-template-columns: 140px 1fr 1fr 150px 90px;
-    padding: 10px 16px;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    color: var(--steel);
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--line);
-  }
-  .grid-head.sockets{ grid-template-columns: 140px 1fr 90px; }
-  .rows{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-  .row-item{
-    display:grid;
-    grid-template-columns: 140px 1fr 1fr 150px 90px;
-    align-items:center;
+  .grid-head{ display:none; }
+  .rows{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+
+  .entry-card{
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    overflow:hidden;
+    padding: 14px 16px;
+    display:flex;
+    flex-direction: column;
+    gap: 12px;
     transition: border-color .15s ease;
   }
-  .row-item.sockets{ grid-template-columns: 140px 1fr 90px; }
+  .entry-card:hover{ border-color: var(--safety-dim); }
+  .entry-top{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap: wrap;
+  }
+  .loc-chip{
+    background: var(--tag);
+    color: var(--tag-ink);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    padding: 9px 14px;
+    border-radius: var(--radius);
+    white-space: nowrap;
+  }
+  .entry-field{ display:flex; flex-direction:column; gap:3px; min-width: 120px; }
+  .entry-field .field-tag{ font-size:9px; letter-spacing:.14em; color:var(--steel); text-transform:uppercase; }
+  .entry-field .val{ font-size: 14px; color:#fff; letter-spacing:0.03em; word-break:break-all; }
+  .entry-spacer{ flex: 1 1 auto; }
+  .entry-actions{ display:flex; gap:6px; }
 
-  .status-wrap{ display:flex; gap:8px; padding: 14px 16px; flex-wrap:wrap; }
+  .status-bar{
+    display:flex;
+    gap:8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .status-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .status-group + .status-group{ padding-left: 10px; border-left: 1px solid var(--line); }
+
+  .socket-card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display:flex;
+    align-items:center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
   .status-pill{
     display:inline-flex;
     align-items:center;
@@ -273,12 +305,27 @@
     border: 1px solid transparent;
     user-select: none;
     transition: transform .1s ease;
+    background: var(--panel-2);
   }
   .status-pill:active{ transform: scale(0.96); }
-  .status-pill::before{ content:""; width:7px; height:7px; border-radius:50%; background: currentColor; }
+  .status-pill::before{ content:""; width:7px; height:7px; border-radius:50%; background: currentColor; flex:none; }
   .status-pill.ok{ background: var(--ok-dim); color: var(--ok); border-color: var(--ok); }
   .status-pill.liberar{ background: var(--liberar-dim); color: var(--liberar); border-color: var(--liberar); }
   .status-pill.nok{ background: var(--nok-dim); color: var(--nok); border-color: var(--nok); }
+  .status-pill.en_linea{ background: var(--safety-dim); color: var(--safety); border-color: var(--safety); }
+  .status-pill.resguardado{ background: #33383d; color: var(--steel); border-color: var(--line); }
+  .status-pill.bottom{ background: var(--ok-dim); color: var(--ok); border-color: var(--ok); }
+  .status-pill.top{ background: var(--safety-dim); color: var(--safety); border-color: var(--safety); }
+
+  .btn-restore{
+    background: var(--panel-2);
+    border: 1px solid var(--liberar);
+    color: var(--liberar);
+    padding: 12px 18px;
+    font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.08em; font-size:13px;
+    border-radius: var(--radius); cursor:pointer;
+  }
+  .btn-restore:hover{ background: var(--liberar-dim); }
   .row-item:hover{ border-color: var(--safety-dim); }
   .cell{ padding: 14px 16px; }
   .cell.loc{
@@ -371,6 +418,19 @@
   </div>
 </div>
 
+<!-- RESTORE CONFIRM MODAL -->
+<div class="modal-overlay" id="restoreModal">
+  <div class="modal-box" style="border-color: var(--liberar);">
+    <div class="stripe" style="background: var(--liberar); color:#241d05;">&#8635;</div>
+    <h3>Restaurar estatus</h3>
+    <p>Esto pondrá a todos los stenciles como <b style="color:var(--steel);">Resguardado</b>, sin importar si estaban marcados En Línea. Esta acción no se puede deshacer.</p>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeRestoreModal()">Cancelar</button>
+      <button class="btn btn-primary" style="margin-top:0;" onclick="confirmRestore()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD / EDIT MODAL -->
 <div class="modal-overlay" id="formModal">
   <div class="form-modal">
@@ -423,10 +483,8 @@
           <input type="text" id="searchStencils" placeholder="Buscar por ubicación, no. de parte o JOB..." oninput="renderStencils()">
         </div>
         <div class="count-pill"><b id="countStencils">0</b> resultados</div>
+        <button class="btn-restore" onclick="askRestore()">&#8635; Restaurar Estatus</button>
         <button class="add-btn" onclick="openFormModal('stencils')">+ Agregar Stencil</button>
-      </div>
-      <div class="grid-head">
-        <div>Ubicación</div><div>No. de Parte</div><div>JOB</div><div></div>
       </div>
       <div class="rows" id="rowsStencils"></div>
       <div class="empty-state" id="emptyStencils" style="display:none;">
@@ -448,9 +506,6 @@
         <div class="count-pill"><b id="countDummies">0</b> resultados</div>
         <button class="add-btn" onclick="openFormModal('dummies')">+ Agregar Dummy</button>
       </div>
-      <div class="grid-head">
-        <div>Ubicación</div><div>No. de Parte</div><div>JOB</div><div></div>
-      </div>
       <div class="rows" id="rowsDummies"></div>
       <div class="empty-state" id="emptyDummies" style="display:none;">
         <div class="display">Aún no hay dummys</div>
@@ -467,9 +522,6 @@
         </div>
         <div class="count-pill"><b id="countSockets">0</b> resultados</div>
         <button class="add-btn" onclick="openFormModal('sockets')">+ Agregar Socket</button>
-      </div>
-      <div class="grid-head sockets">
-        <div>Ubicación</div><div>No. de Parte</div><div></div>
       </div>
       <div class="rows" id="rowsSockets"></div>
       <div class="empty-state" id="emptySockets" style="display:none;">
@@ -488,28 +540,28 @@ const PASSWORD = "9062";
 // Seed data: leído de la foto de la rejilla R2/L1. Verifica cada etiqueta contra el rack físico,
 // la letra manuscrita en algunas etiquetas puede tener errores de transcripción.
 const SEED_STENCILS = [
-  {loc:"R2/L1/1",  part:"2858166102.100", job:"S24A915165B", status:"ok"},
-  {loc:"R2/L1/2",  part:"2858150810.100", job:"S21K916654B", status:"ok"},
-  {loc:"R2/L1/3",  part:"2858250604.100", job:"S04G560464B", status:"ok"},
-  {loc:"R2/L1/4",  part:"2858261104.100", job:"S11228431B", status:"ok"},
-  {loc:"R2/L1/5",  part:"2858199306.100", job:"E26C23129B", status:"ok"},
-  {loc:"R2/L1/6",  part:"2858260004.100", job:"S04E236035B", status:"ok"},
-  {loc:"R2/L1/7",  part:"2858226104.100", job:"S19G226030B", status:"ok"},
-  {loc:"R2/L1/8",  part:"2858287702.100", job:"S18E669365B", status:"ok"},
-  {loc:"R2/L1/9",  part:"2858279802.100", job:"S13L231733B", status:"ok"},
-  {loc:"R2/L1/10", part:"2858187574.100", job:"S12E223878B", status:"ok"},
-  {loc:"R2/L1/11", part:"2858154603.100", job:"S05F337991B", status:"ok"},
-  {loc:"R2/L1/12", part:"2858287602.100", job:"E25L030796", status:"ok"},
-  {loc:"R2/L1/13", part:"2858153813.100", job:"S09H451474B", status:"ok"},
-  {loc:"R2/L1/14", part:"2858156204.100", job:"S18E669363B", status:"ok"},
-  {loc:"R2/L1/15", part:"2858491002.100", job:"S18E669382B", status:"ok"},
-  {loc:"R2/L1/16", part:"2858175701.100", job:"E26E20182B", status:"ok"},
-  {loc:"R2/L1/17", part:"2858332602.100", job:"F26E20182B", status:"ok"},
-  {loc:"R2/L1/18", part:"2858214702.100", job:"S19F610323B", status:"ok"},
-  {loc:"R2/L1/19", part:"2858259301.100", job:"S28L344899B", status:"ok"},
-  {loc:"R2/L1/20", part:"2858236103.100", job:"S05A345138B", status:"ok"},
-  {loc:"R2/L1/21", part:"2858069543.100", job:"S15K230774B", status:"ok"},
-  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B", status:"ok"}
+  {loc:"R2/L1/1",  part:"2858166102.100", job:"S24A915165B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/2",  part:"2858150810.100", job:"S21K916654B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/3",  part:"2858250604.100", job:"S04G560464B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/4",  part:"2858261104.100", job:"S11228431B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/5",  part:"2858199306.100", job:"E26C23129B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/6",  part:"2858260004.100", job:"S04E236035B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/7",  part:"2858226104.100", job:"S19G226030B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/8",  part:"2858287702.100", job:"S18E669365B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/9",  part:"2858279802.100", job:"S13L231733B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/10", part:"2858187574.100", job:"S12E223878B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/11", part:"2858154603.100", job:"S05F337991B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/12", part:"2858287602.100", job:"E25L030796", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/13", part:"2858153813.100", job:"S09H451474B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/14", part:"2858156204.100", job:"S18E669363B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/15", part:"2858491002.100", job:"S18E669382B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/16", part:"2858175701.100", job:"E26E20182B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/17", part:"2858332602.100", job:"F26E20182B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/18", part:"2858214702.100", job:"S19F610323B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/19", part:"2858259301.100", job:"S28L344899B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/20", part:"2858236103.100", job:"S05A345138B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/21", part:"2858069543.100", job:"S15K230774B", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B", status:"ok", location_status:"resguardado", position:"bottom"}
 ];
 
 const SEED_SOCKETS = [
@@ -533,6 +585,8 @@ let formContext = "stencils";
 
 const STATUS_LABELS = { ok: "OK", liberar: "Para Liberar", nok: "NOK" };
 const STATUS_ORDER = ["ok", "liberar", "nok"];
+const LOC_STATUS_LABELS = { en_linea: "En Línea", resguardado: "Resguardado" };
+const POSITION_LABELS = { bottom: "Bottom", top: "Top" };
 
 // ---------- LOGIN ----------
 function tryLogin(){
@@ -594,27 +648,42 @@ function matches(item, q){
 
 function rowHTML(item, kind){
   const status = item.status || 'ok';
+  const locStatus = item.location_status || 'resguardado';
+  const position = item.position || 'bottom';
+  const statusBar = kind === 'sockets' ? '' : `
+      <div class="status-bar">
+        <div class="status-group">
+          <span class="status-pill ${status}" title="Toca para cambiar el estatus" onclick="cycleStatus('${kind}','${item.id}')">${STATUS_LABELS[status]}</span>
+        </div>
+        <div class="status-group">
+          <span class="status-pill ${locStatus}" title="Toca para cambiar la ubicación" onclick="cycleLocStatus('${kind}','${item.id}')">${LOC_STATUS_LABELS[locStatus]}</span>
+        </div>
+        <div class="status-group">
+          <span class="status-pill ${position}" title="Toca para cambiar Top/Bottom" onclick="cyclePosition('${kind}','${item.id}')">${POSITION_LABELS[position]}</span>
+        </div>
+      </div>`;
   return `
-    <div class="row-item">
-      <div class="cell loc">${escapeHtml(item.loc)}</div>
-      <div class="cell"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
-      <div class="cell"><span class="field-tag">JOB</span><span class="val">${escapeHtml(item.job)}</span></div>
-      <div class="status-wrap">
-        <span class="status-pill ${status}" title="Toca para cambiar el estado" onclick="cycleStatus('${kind}','${item.id}')">${STATUS_LABELS[status]}</span>
-      </div>
-      <div class="cell row-actions">
-        <button class="icon-btn" title="Editar" onclick="editEntry('${kind}','${item.id}')">&#9998;</button>
-        <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('${kind}','${item.id}')">&#10005;</button>
-      </div>
+    <div class="entry-card">
+      <div class="entry-top">
+        <div class="loc-chip">${escapeHtml(item.loc)}</div>
+        <div class="entry-field"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
+        <div class="entry-field"><span class="field-tag">JOB</span><span class="val">${escapeHtml(item.job)}</span></div>
+        <div class="entry-spacer"></div>
+        <div class="entry-actions">
+          <button class="icon-btn" title="Editar" onclick="editEntry('${kind}','${item.id}')">&#9998;</button>
+          <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('${kind}','${item.id}')">&#10005;</button>
+        </div>
+      </div>${statusBar}
     </div>`;
 }
 
 function rowSocketHTML(item){
   return `
-    <div class="row-item sockets">
-      <div class="cell loc">${escapeHtml(item.loc)}</div>
-      <div class="cell"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
-      <div class="cell row-actions">
+    <div class="socket-card">
+      <div class="loc-chip">${escapeHtml(item.loc)}</div>
+      <div class="entry-field"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
+      <div class="entry-spacer"></div>
+      <div class="entry-actions">
         <button class="icon-btn" title="Editar" onclick="editEntry('sockets','${item.id}')">&#9998;</button>
         <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('sockets','${item.id}')">&#10005;</button>
       </div>
@@ -629,6 +698,37 @@ function cycleStatus(kind, id){
   item.status = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
   saveData(kind === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
   kind === 'stencils' ? renderStencils() : renderDummies();
+}
+
+function cycleLocStatus(kind, id){
+  const arr = kind === 'stencils' ? stencils : dummies;
+  const item = arr.find(x => x.id === id);
+  if(!item) return;
+  item.location_status = (item.location_status || 'resguardado') === 'resguardado' ? 'en_linea' : 'resguardado';
+  saveData(kind === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
+  kind === 'stencils' ? renderStencils() : renderDummies();
+}
+
+function cyclePosition(kind, id){
+  const arr = kind === 'stencils' ? stencils : dummies;
+  const item = arr.find(x => x.id === id);
+  if(!item) return;
+  item.position = (item.position || 'bottom') === 'bottom' ? 'top' : 'bottom';
+  saveData(kind === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
+  kind === 'stencils' ? renderStencils() : renderDummies();
+}
+
+function askRestore(){
+  document.getElementById('restoreModal').classList.add('show');
+}
+function closeRestoreModal(){
+  document.getElementById('restoreModal').classList.remove('show');
+}
+function confirmRestore(){
+  stencils.forEach(it => { it.location_status = 'resguardado'; });
+  saveData('tr_stencils', stencils);
+  closeRestoreModal();
+  renderStencils();
 }
 
 function escapeHtml(s){
@@ -714,7 +814,7 @@ function saveEntry(){
     }
   } else {
     const newItem = { id: 'id_'+Math.random().toString(36).slice(2,10), loc, part };
-    if(!isSockets){ newItem.job = job; newItem.status = 'ok'; }
+    if(!isSockets){ newItem.job = job; newItem.status = 'ok'; newItem.location_status = 'resguardado'; newItem.position = 'bottom'; }
     arr.push(newItem);
   }
   saveData(storeKeyFor(formContext), arr);
