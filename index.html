@@ -1077,14 +1077,35 @@ function mergeDummiesSeed(existing, seed){
   return existing;
 }
 
+// El código (SEED_STENCILS / SEED_DUMMIES / SEED_SOCKETS) siempre manda para
+// parte/JOB/descripción: si editas el código, se refleja al recargar la página.
+// Los estatus/pills (OK-Liberar-NOK, En Línea-Resguardado, Top-Bottom) se
+// respetan tal como los dejaste tocándolos en la página, no se tocan aquí.
+function syncFieldsFromSeed(existing, seed, fields){
+  const seedMap = new Map(seed.map(s => [s.loc.toLowerCase(), s]));
+  let changed = false;
+  existing.forEach(it => {
+    const s = seedMap.get(String(it.loc).toLowerCase());
+    if(!s) return;
+    fields.forEach(f => {
+      const newVal = s[f] !== undefined ? s[f] : "";
+      if(it[f] !== newVal){ it[f] = newVal; changed = true; }
+    });
+  });
+  return changed;
+}
+
 let stencils = mergeSeedByLoc(loadData("tr_stencils", SEED_STENCILS), SEED_STENCILS);
 if(ensureSkeleton(stencils)){ saveData('tr_stencils', stencils); }
+if(syncFieldsFromSeed(stencils, SEED_STENCILS, ['part','job'])){ saveData('tr_stencils', stencils); }
 function stripOldDummyScheme(existing){
   return existing.filter(it => !/^[A-Za-z]+\d+-\d+$/.test(String(it.loc).trim()));
 }
 
 let dummies  = mergeDummiesSeed(stripOldDummyScheme(loadData("tr_dummies", SEED_DUMMIES)), SEED_DUMMIES);
+if(syncFieldsFromSeed(dummies, SEED_DUMMIES, ['part','job'])){ saveData('tr_dummies', dummies); }
 let sockets  = loadData("tr_sockets", SEED_SOCKETS);
+if(syncFieldsFromSeed(sockets, SEED_SOCKETS, ['part'])){ saveData('tr_sockets', sockets); }
 let currentTab = "stencils";
 let formContext = "stencils";
 
