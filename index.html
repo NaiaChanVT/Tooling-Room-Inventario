@@ -13,12 +13,18 @@
     --panel-2: #262b30;
     --line: #3a4046;
     --steel: #8b959c;
-    --safety: #a8cf45;
-    --safety-dim: #6f8a2c;
+    --safety: #4fa8e0;
+    --safety-dim: #326c92;
     --tag: #f2efe4;
     --tag-ink: #17181a;
     --warn: #e2a33d;
     --danger: #d9564a;
+    --ok: #6fbf4a;
+    --ok-dim: #274d1a;
+    --liberar: #e2b53d;
+    --liberar-dim: #4d3f14;
+    --nok: #d9564a;
+    --nok-dim: #4d1f1c;
     --radius: 3px;
   }
   *{box-sizing:border-box;}
@@ -230,7 +236,7 @@
 
   .grid-head{
     display:grid;
-    grid-template-columns: 140px 1fr 1fr 90px;
+    grid-template-columns: 140px 1fr 1fr 150px 90px;
     padding: 10px 16px;
     font-size: 11px;
     letter-spacing: 0.12em;
@@ -238,10 +244,11 @@
     text-transform: uppercase;
     border-bottom: 1px solid var(--line);
   }
+  .grid-head.sockets{ grid-template-columns: 140px 1fr 90px; }
   .rows{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .row-item{
     display:grid;
-    grid-template-columns: 140px 1fr 1fr 90px;
+    grid-template-columns: 140px 1fr 1fr 150px 90px;
     align-items:center;
     background: var(--panel);
     border: 1px solid var(--line);
@@ -249,6 +256,29 @@
     overflow:hidden;
     transition: border-color .15s ease;
   }
+  .row-item.sockets{ grid-template-columns: 140px 1fr 90px; }
+
+  .status-wrap{ display:flex; gap:8px; padding: 14px 16px; flex-wrap:wrap; }
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-family:'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid transparent;
+    user-select: none;
+    transition: transform .1s ease;
+  }
+  .status-pill:active{ transform: scale(0.96); }
+  .status-pill::before{ content:""; width:7px; height:7px; border-radius:50%; background: currentColor; }
+  .status-pill.ok{ background: var(--ok-dim); color: var(--ok); border-color: var(--ok); }
+  .status-pill.liberar{ background: var(--liberar-dim); color: var(--liberar); border-color: var(--liberar); }
+  .status-pill.nok{ background: var(--nok-dim); color: var(--nok); border-color: var(--nok); }
   .row-item:hover{ border-color: var(--safety-dim); }
   .cell{ padding: 14px 16px; }
   .cell.loc{
@@ -355,7 +385,7 @@
       <label class="field-label">No. de Parte</label>
       <input type="text" id="fPart" placeholder="2858166102.100">
     </div>
-    <div class="form-row">
+    <div class="form-row" id="fJobRow">
       <label class="field-label">JOB</label>
       <input type="text" id="fJob" placeholder="S24A915165B">
     </div>
@@ -379,6 +409,7 @@
     <nav class="tabs">
       <button id="tabStencils" class="active" onclick="switchTab('stencils')">Stenciles</button>
       <button id="tabDummies" onclick="switchTab('dummies')">Dummys</button>
+      <button id="tabSockets" onclick="switchTab('sockets')">Sockets</button>
     </nav>
     <button class="btn btn-ghost" onclick="logout()">Salir</button>
   </header>
@@ -426,6 +457,26 @@
         <p>Cuando tengas la información de los dummys, agrégalos aquí y podrás buscarlos igual que los stenciles.</p>
       </div>
     </div>
+
+    <!-- SOCKETS VIEW -->
+    <div id="view-sockets" style="display:none;">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="ico">&#128269;</span>
+          <input type="text" id="searchSockets" placeholder="Buscar por ubicación o no. de parte..." oninput="renderSockets()">
+        </div>
+        <div class="count-pill"><b id="countSockets">0</b> resultados</div>
+        <button class="add-btn" onclick="openFormModal('sockets')">+ Agregar Socket</button>
+      </div>
+      <div class="grid-head sockets">
+        <div>Ubicación</div><div>No. de Parte</div><div></div>
+      </div>
+      <div class="rows" id="rowsSockets"></div>
+      <div class="empty-state" id="emptySockets" style="display:none;">
+        <div class="display">Sin resultados</div>
+        <p>No hay sockets que coincidan con tu búsqueda.</p>
+      </div>
+    </div>
   </main>
 
   <footer>TOOLING ROOM · R2/L1 · Datos guardados localmente en este navegador</footer>
@@ -437,28 +488,33 @@ const PASSWORD = "9062";
 // Seed data: leído de la foto de la rejilla R2/L1. Verifica cada etiqueta contra el rack físico,
 // la letra manuscrita en algunas etiquetas puede tener errores de transcripción.
 const SEED_STENCILS = [
-  {loc:"R2/L1/1",  part:"2858166102.100", job:"S24A915165B"},
-  {loc:"R2/L1/2",  part:"2858150810.100", job:"S21K916654B"},
-  {loc:"R2/L1/3",  part:"2858250604.100", job:"S04G560464B"},
-  {loc:"R2/L1/4",  part:"2858261104.100", job:"S11228431B"},
-  {loc:"R2/L1/5",  part:"2858199306.100", job:"E26C23129B"},
-  {loc:"R2/L1/6",  part:"2858260004.100", job:"S04E236035B"},
-  {loc:"R2/L1/7",  part:"2858226104.100", job:"S19G226030B"},
-  {loc:"R2/L1/8",  part:"2858287702.100", job:"S18E669365B"},
-  {loc:"R2/L1/9",  part:"2858279802.100", job:"S13L231733B"},
-  {loc:"R2/L1/10", part:"2858187574.100", job:"S12E223878B"},
-  {loc:"R2/L1/11", part:"2858154603.100", job:"S05F337991B"},
-  {loc:"R2/L1/12", part:"2858287602.100", job:"E25L030796"},
-  {loc:"R2/L1/13", part:"2858153813.100", job:"S09H451474B"},
-  {loc:"R2/L1/14", part:"2858156204.100", job:"S18E669363B"},
-  {loc:"R2/L1/15", part:"2858491002.100", job:"S18E669382B"},
-  {loc:"R2/L1/16", part:"2858175701.100", job:"E26E20182B"},
-  {loc:"R2/L1/17", part:"2858332602.100", job:"F26E20182B"},
-  {loc:"R2/L1/18", part:"2858214702.100", job:"S19F610323B"},
-  {loc:"R2/L1/19", part:"2858259301.100", job:"S28L344899B"},
-  {loc:"R2/L1/20", part:"2858236103.100", job:"S05A345138B"},
-  {loc:"R2/L1/21", part:"2858069543.100", job:"S15K230774B"},
-  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B"}
+  {loc:"R2/L1/1",  part:"2858166102.100", job:"S24A915165B", status:"ok"},
+  {loc:"R2/L1/2",  part:"2858150810.100", job:"S21K916654B", status:"ok"},
+  {loc:"R2/L1/3",  part:"2858250604.100", job:"S04G560464B", status:"ok"},
+  {loc:"R2/L1/4",  part:"2858261104.100", job:"S11228431B", status:"ok"},
+  {loc:"R2/L1/5",  part:"2858199306.100", job:"E26C23129B", status:"ok"},
+  {loc:"R2/L1/6",  part:"2858260004.100", job:"S04E236035B", status:"ok"},
+  {loc:"R2/L1/7",  part:"2858226104.100", job:"S19G226030B", status:"ok"},
+  {loc:"R2/L1/8",  part:"2858287702.100", job:"S18E669365B", status:"ok"},
+  {loc:"R2/L1/9",  part:"2858279802.100", job:"S13L231733B", status:"ok"},
+  {loc:"R2/L1/10", part:"2858187574.100", job:"S12E223878B", status:"ok"},
+  {loc:"R2/L1/11", part:"2858154603.100", job:"S05F337991B", status:"ok"},
+  {loc:"R2/L1/12", part:"2858287602.100", job:"E25L030796", status:"ok"},
+  {loc:"R2/L1/13", part:"2858153813.100", job:"S09H451474B", status:"ok"},
+  {loc:"R2/L1/14", part:"2858156204.100", job:"S18E669363B", status:"ok"},
+  {loc:"R2/L1/15", part:"2858491002.100", job:"S18E669382B", status:"ok"},
+  {loc:"R2/L1/16", part:"2858175701.100", job:"E26E20182B", status:"ok"},
+  {loc:"R2/L1/17", part:"2858332602.100", job:"F26E20182B", status:"ok"},
+  {loc:"R2/L1/18", part:"2858214702.100", job:"S19F610323B", status:"ok"},
+  {loc:"R2/L1/19", part:"2858259301.100", job:"S28L344899B", status:"ok"},
+  {loc:"R2/L1/20", part:"2858236103.100", job:"S05A345138B", status:"ok"},
+  {loc:"R2/L1/21", part:"2858069543.100", job:"S15K230774B", status:"ok"},
+  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B", status:"ok"}
+];
+
+const SEED_SOCKETS = [
+  {loc:"55", part:"3031"},
+  {loc:"28", part:"3031"}
 ];
 
 function loadData(key, seed){
@@ -471,8 +527,12 @@ function saveData(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
 
 let stencils = loadData("tr_stencils", SEED_STENCILS);
 let dummies  = loadData("tr_dummies", []);
+let sockets  = loadData("tr_sockets", SEED_SOCKETS);
 let currentTab = "stencils";
 let formContext = "stencils";
+
+const STATUS_LABELS = { ok: "OK", liberar: "Para Liberar", nok: "NOK" };
+const STATUS_ORDER = ["ok", "liberar", "nok"];
 
 // ---------- LOGIN ----------
 function tryLogin(){
@@ -483,6 +543,7 @@ function tryLogin(){
     sessionStorage.setItem('tr_auth', '1');
     renderStencils();
     renderDummies();
+    renderSockets();
   } else {
     document.getElementById('errorModal').classList.add('show');
   }
@@ -507,6 +568,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('app').classList.add('show');
     renderStencils();
     renderDummies();
+    renderSockets();
   }
 });
 
@@ -515,8 +577,10 @@ function switchTab(tab){
   currentTab = tab;
   document.getElementById('tabStencils').classList.toggle('active', tab==='stencils');
   document.getElementById('tabDummies').classList.toggle('active', tab==='dummies');
+  document.getElementById('tabSockets').classList.toggle('active', tab==='sockets');
   document.getElementById('view-stencils').style.display = tab==='stencils' ? 'block' : 'none';
   document.getElementById('view-dummies').style.display = tab==='dummies' ? 'block' : 'none';
+  document.getElementById('view-sockets').style.display = tab==='sockets' ? 'block' : 'none';
 }
 
 // ---------- RENDER ----------
@@ -529,16 +593,42 @@ function matches(item, q){
 }
 
 function rowHTML(item, kind){
+  const status = item.status || 'ok';
   return `
     <div class="row-item">
       <div class="cell loc">${escapeHtml(item.loc)}</div>
       <div class="cell"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
       <div class="cell"><span class="field-tag">JOB</span><span class="val">${escapeHtml(item.job)}</span></div>
+      <div class="status-wrap">
+        <span class="status-pill ${status}" title="Toca para cambiar el estado" onclick="cycleStatus('${kind}','${item.id}')">${STATUS_LABELS[status]}</span>
+      </div>
       <div class="cell row-actions">
         <button class="icon-btn" title="Editar" onclick="editEntry('${kind}','${item.id}')">&#9998;</button>
         <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('${kind}','${item.id}')">&#10005;</button>
       </div>
     </div>`;
+}
+
+function rowSocketHTML(item){
+  return `
+    <div class="row-item sockets">
+      <div class="cell loc">${escapeHtml(item.loc)}</div>
+      <div class="cell"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
+      <div class="cell row-actions">
+        <button class="icon-btn" title="Editar" onclick="editEntry('sockets','${item.id}')">&#9998;</button>
+        <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('sockets','${item.id}')">&#10005;</button>
+      </div>
+    </div>`;
+}
+
+function cycleStatus(kind, id){
+  const arr = kind === 'stencils' ? stencils : dummies;
+  const item = arr.find(x => x.id === id);
+  if(!item) return;
+  const idx = STATUS_ORDER.indexOf(item.status || 'ok');
+  item.status = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
+  saveData(kind === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
+  kind === 'stencils' ? renderStencils() : renderDummies();
 }
 
 function escapeHtml(s){
@@ -568,16 +658,32 @@ function renderDummies(){
   document.getElementById('emptyDummies').style.display = filtered.length ? 'none' : 'block';
 }
 
+function socketMatches(item, q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  return item.loc.toLowerCase().includes(q) || item.part.toLowerCase().includes(q);
+}
+
+function renderSockets(){
+  ensureIds(sockets);
+  const q = document.getElementById('searchSockets').value;
+  const filtered = sockets.filter(it => socketMatches(it, q));
+  document.getElementById('countSockets').textContent = filtered.length;
+  document.getElementById('rowsSockets').innerHTML = filtered.map(it => rowSocketHTML(it)).join('');
+  document.getElementById('emptySockets').style.display = filtered.length ? 'none' : 'block';
+}
+
 // ---------- ADD / EDIT / DELETE ----------
+const KIND_LABELS = { stencils: 'Stencil', dummies: 'Dummy', sockets: 'Socket' };
+
 function openFormModal(kind, editItem){
   formContext = kind;
-  document.getElementById('formTitle').textContent = editItem
-    ? (kind==='stencils' ? 'Editar Stencil' : 'Editar Dummy')
-    : (kind==='stencils' ? 'Agregar Stencil' : 'Agregar Dummy');
+  document.getElementById('formTitle').textContent = (editItem ? 'Editar ' : 'Agregar ') + KIND_LABELS[kind];
   document.getElementById('editId').value = editItem ? editItem.id : '';
   document.getElementById('fLoc').value = editItem ? editItem.loc : '';
   document.getElementById('fPart').value = editItem ? editItem.part : '';
-  document.getElementById('fJob').value = editItem ? editItem.job : '';
+  document.getElementById('fJob').value = editItem ? (editItem.job || '') : '';
+  document.getElementById('fJobRow').style.display = kind === 'sockets' ? 'none' : 'block';
   document.getElementById('formModal').classList.add('show');
   setTimeout(()=>document.getElementById('fLoc').focus(), 50);
 }
@@ -585,42 +691,50 @@ function closeFormModal(){
   document.getElementById('formModal').classList.remove('show');
 }
 
+function arrFor(kind){ return kind === 'stencils' ? stencils : kind === 'dummies' ? dummies : sockets; }
+function storeKeyFor(kind){ return kind === 'stencils' ? 'tr_stencils' : kind === 'dummies' ? 'tr_dummies' : 'tr_sockets'; }
+function renderFor(kind){ kind === 'stencils' ? renderStencils() : kind === 'dummies' ? renderDummies() : renderSockets(); }
+
 function saveEntry(){
   const loc = document.getElementById('fLoc').value.trim();
   const part = document.getElementById('fPart').value.trim();
   const job = document.getElementById('fJob').value.trim();
-  if(!loc || !part || !job){ alert('Completa ubicación, no. de parte y JOB.'); return; }
+  const isSockets = formContext === 'sockets';
+  if(!loc || !part || (!isSockets && !job)){
+    alert(isSockets ? 'Completa ubicación y no. de parte.' : 'Completa ubicación, no. de parte y JOB.');
+    return;
+  }
   const id = document.getElementById('editId').value;
-  const arr = formContext === 'stencils' ? stencils : dummies;
+  const arr = arrFor(formContext);
 
   if(id){
     const idx = arr.findIndex(x => x.id === id);
-    if(idx > -1){ arr[idx] = {...arr[idx], loc, part, job}; }
+    if(idx > -1){
+      arr[idx] = isSockets ? {...arr[idx], loc, part} : {...arr[idx], loc, part, job};
+    }
   } else {
-    arr.push({id: 'id_'+Math.random().toString(36).slice(2,10), loc, part, job});
+    const newItem = { id: 'id_'+Math.random().toString(36).slice(2,10), loc, part };
+    if(!isSockets){ newItem.job = job; newItem.status = 'ok'; }
+    arr.push(newItem);
   }
-  saveData(formContext === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
+  saveData(storeKeyFor(formContext), arr);
   closeFormModal();
-  formContext === 'stencils' ? renderStencils() : renderDummies();
+  renderFor(formContext);
 }
 
 function editEntry(kind, id){
-  const arr = kind === 'stencils' ? stencils : dummies;
-  const item = arr.find(x => x.id === id);
+  const item = arrFor(kind).find(x => x.id === id);
   if(item) openFormModal(kind, item);
 }
 
 function deleteEntry(kind, id){
   if(!confirm('¿Eliminar este registro?')) return;
-  if(kind === 'stencils'){
-    stencils = stencils.filter(x => x.id !== id);
-    saveData('tr_stencils', stencils);
-    renderStencils();
-  } else {
-    dummies = dummies.filter(x => x.id !== id);
-    saveData('tr_dummies', dummies);
-    renderDummies();
-  }
+  const filtered = arrFor(kind).filter(x => x.id !== id);
+  if(kind === 'stencils') stencils = filtered;
+  else if(kind === 'dummies') dummies = filtered;
+  else sockets = filtered;
+  saveData(storeKeyFor(kind), filtered);
+  renderFor(kind);
 }
 </script>
 </body>
