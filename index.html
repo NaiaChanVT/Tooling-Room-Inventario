@@ -316,6 +316,8 @@
   .status-pill.resguardado{ background: #33383d; color: var(--steel); border-color: var(--line); }
   .status-pill.bottom{ background: var(--ok-dim); color: var(--ok); border-color: var(--ok); }
   .status-pill.top{ background: var(--safety-dim); color: var(--safety); border-color: var(--safety); }
+  .status-pill.locked{ cursor: default; opacity: 0.85; }
+  .status-pill.locked::after{ content: "\1F512"; font-size: 9px; margin-left: 2px; }
 
   .btn-restore{
     background: var(--panel-2);
@@ -399,7 +401,7 @@
 <!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
-    <div class="login-eyebrow">R2 / L1 &mdash; ACCESO RESTRINGIDO</div>
+    <div class="login-eyebrow">ACCESO RESTRINGIDO</div>
     <h1>Tooling Room</h1>
     <div class="login-sub">Ingresa la contraseña para acceder al buscador de stenciles y dummys.</div>
     <label class="field-label" for="pwInput">Contraseña</label>
@@ -561,7 +563,44 @@ const SEED_STENCILS = [
   {loc:"R2/L1/19", part:"2858259301.100", job:"S28L344899B", status:"ok", location_status:"resguardado", position:"bottom"},
   {loc:"R2/L1/20", part:"2858236103.100", job:"S05A345138B", status:"ok", location_status:"resguardado", position:"bottom"},
   {loc:"R2/L1/21", part:"2858069543.100", job:"S15K230774B", status:"ok", location_status:"resguardado", position:"bottom"},
-  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B", status:"ok", location_status:"resguardado", position:"bottom"}
+  {loc:"R2/L1/22", part:"2858194606.100", job:"S13L231709B", status:"ok", location_status:"resguardado", position:"bottom"},
+
+  {loc:"R3/L1/1",  part:"21014026", job:"S11L454849T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/2",  part:"2858259402.100", job:"S09C667343T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/3",  part:"2858191002.100", job:"S31C668021T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/4",  part:"AAA27040502", job:"S16D668370T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/5",  part:"2858259401.100/OFFSET X", job:"S24B669946T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/6",  part:"2858156204.100", job:"S06C447138T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/7",  part:"2858150810.100", job:"S13B556098T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/8",  part:"2858095707.100", job:"S04G560461T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/9",  part:"2858037701.100", job:"S26D448604T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/10", part:"AAA2742960", job:"S02E448801T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/11", part:"2858230813.100", job:"S12B665851T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/12", part:"2858209705.100", job:"S07E448941T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/13", part:"2858290401.100", job:"S08E448977T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/14", part:"2858185715.100", job:"S13E449058T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/15", part:"2858125602.100", job:"S13E449076T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/16", part:"2858125602.100", job:"S21A555487T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/17", part:"2858287602.100", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/18", part:"2858250604.100", job:"S13K731323T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/19", part:"2858157603.100 OES CUAUTLA", job:"S07J814508T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/20", part:"2858157603.100 OES CUAUTLA", job:"S06G201708T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/21", part:"2858157603.100 OES CUAUTLA", job:"S03L916656T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/22", part:"2858049513.100 OES CUAUTLA", job:"E26D161577T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/23", part:"2858279802.100", job:"S30A915205T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/24", part:"2858181102.100", job:"S22K814880T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/25", part:"2858151703.100", job:"S17F611128T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/26", part:"2858117001.100 OES CUAUTLA", job:"S03K454998T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/27", part:"2858117001.100 OES CUAUTLA", job:"S04K450247T", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/28", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/29", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/30", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/31", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/32", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/33", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/34", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/35", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"},
+  {loc:"R3/L1/36", part:"", job:"", status:"ok", location_status:"resguardado", position:"bottom"}
 ];
 
 const SEED_SOCKETS = [
@@ -577,7 +616,18 @@ function loadData(key, seed){
 }
 function saveData(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
 
-let stencils = loadData("tr_stencils", SEED_STENCILS);
+function mergeSeedByLoc(existing, seed){
+  const existingLocs = new Set(existing.map(it => it.loc.toLowerCase()));
+  const missing = seed.filter(it => !existingLocs.has(it.loc.toLowerCase()));
+  if(missing.length){
+    const merged = existing.concat(missing);
+    saveData('tr_stencils', merged);
+    return merged;
+  }
+  return existing;
+}
+
+let stencils = mergeSeedByLoc(loadData("tr_stencils", SEED_STENCILS), SEED_STENCILS);
 let dummies  = loadData("tr_dummies", []);
 let sockets  = loadData("tr_sockets", SEED_SOCKETS);
 let currentTab = "stencils";
@@ -638,18 +688,33 @@ function switchTab(tab){
 }
 
 // ---------- RENDER ----------
+function locationMatches(loc, q){
+  const locL = loc.toLowerCase();
+  const qL = q.toLowerCase();
+  if(locL === qL) return true;
+  const idx = locL.indexOf(qL);
+  if(idx === -1) return false;
+  const nextChar = locL.charAt(idx + qL.length);
+  return nextChar === '' || !/[0-9]/.test(nextChar);
+}
+
 function matches(item, q){
   if(!q) return true;
-  q = q.toLowerCase();
-  return item.loc.toLowerCase().includes(q) ||
-         item.part.toLowerCase().includes(q) ||
-         item.job.toLowerCase().includes(q);
+  q = q.trim();
+  const ql = q.toLowerCase();
+  return locationMatches(item.loc, q) ||
+         item.part.toLowerCase().includes(ql) ||
+         item.job.toLowerCase().includes(ql);
 }
 
 function rowHTML(item, kind){
   const status = item.status || 'ok';
   const locStatus = item.location_status || 'resguardado';
-  const position = item.position || 'bottom';
+  const isR2 = /^r2/i.test(item.loc.trim());
+  const position = isR2 ? 'bottom' : (item.position || 'bottom');
+  const positionPill = isR2
+    ? `<span class="status-pill bottom locked" title="Los stenciles R2 siempre son Bottom">${POSITION_LABELS.bottom}</span>`
+    : `<span class="status-pill ${position}" title="Toca para cambiar Top/Bottom" onclick="cyclePosition('${kind}','${item.id}')">${POSITION_LABELS[position]}</span>`;
   const statusBar = kind === 'sockets' ? '' : `
       <div class="status-bar">
         <div class="status-group">
@@ -659,7 +724,7 @@ function rowHTML(item, kind){
           <span class="status-pill ${locStatus}" title="Toca para cambiar la ubicación" onclick="cycleLocStatus('${kind}','${item.id}')">${LOC_STATUS_LABELS[locStatus]}</span>
         </div>
         <div class="status-group">
-          <span class="status-pill ${position}" title="Toca para cambiar Top/Bottom" onclick="cyclePosition('${kind}','${item.id}')">${POSITION_LABELS[position]}</span>
+          ${positionPill}
         </div>
       </div>`;
   return `
@@ -713,6 +778,7 @@ function cyclePosition(kind, id){
   const arr = kind === 'stencils' ? stencils : dummies;
   const item = arr.find(x => x.id === id);
   if(!item) return;
+  if(/^r2/i.test(item.loc.trim())) return;
   item.position = (item.position || 'bottom') === 'bottom' ? 'top' : 'bottom';
   saveData(kind === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
   kind === 'stencils' ? renderStencils() : renderDummies();
@@ -760,8 +826,8 @@ function renderDummies(){
 
 function socketMatches(item, q){
   if(!q) return true;
-  q = q.toLowerCase();
-  return item.loc.toLowerCase().includes(q) || item.part.toLowerCase().includes(q);
+  const ql = q.toLowerCase();
+  return locationMatches(item.loc, q) || item.part.toLowerCase().includes(ql);
 }
 
 function renderSockets(){
