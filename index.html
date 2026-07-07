@@ -368,6 +368,31 @@
   }
   .add-btn:hover{ background:#b8de5c; }
 
+  .rack-filter{
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: #fff;
+    padding: 11px 12px;
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .rack-filter:focus{ outline: 2px solid var(--safety); outline-offset: 1px; }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap: 16px;
+    padding: 10px 4px 4px;
+    margin-bottom: 4px;
+    font-size: 11.5px;
+    color: var(--steel);
+  }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .legend .dot.ok{ background: var(--ok); }
+  .legend .dot.enlinea{ background: var(--safety); }
+  .legend .dot.top{ background: linear-gradient(90deg, var(--safety) 50%, var(--ok) 50%); }
+
   .dummies-banner{
     background: var(--panel-2);
     border: 1px solid var(--warn);
@@ -381,8 +406,12 @@
   }
 
   footer{
-    text-align:center; color: var(--steel); font-size: 11px; padding: 30px 20px 40px; letter-spacing:.05em;
+    text-align:center; padding: 34px 20px 44px; border-top: 1px solid var(--line); margin-top: 20px;
   }
+  .footer-brand{
+    font-family:'Oswald', sans-serif; letter-spacing: 0.2em; font-size: 13px; color: var(--steel);
+  }
+  .footer-sub{ color: #565d63; font-size: 11px; margin-top: 6px; letter-spacing: 0.04em; }
 
   @media (max-width: 720px){
     .grid-head{ display:none; }
@@ -433,12 +462,11 @@
   </div>
 </div>
 
-<!-- ADD / EDIT MODAL -->
+<!-- ADD MODAL -->
 <div class="modal-overlay" id="formModal">
   <div class="form-modal">
     <h3 id="formTitle">Agregar Stencil</h3>
-    <div class="sub">Captura la ubicación, número de parte y JOB tal como aparecen en la etiqueta.</div>
-    <input type="hidden" id="editId">
+    <div class="sub">Captura la ubicación, número de parte y JOB tal como aparecen en la etiqueta. Si la ubicación ya existe, se actualiza; no hay edición ni eliminación desde la interfaz, solo por código.</div>
     <div class="form-row">
       <label class="field-label">Ubicación (ej. R2/L1/1)</label>
       <input type="text" id="fLoc" placeholder="R2/L1/1">
@@ -484,6 +512,14 @@
           <span class="ico">&#128269;</span>
           <input type="text" id="searchStencils" placeholder="Buscar por ubicación, no. de parte o JOB..." oninput="renderStencils()">
         </div>
+        <select class="rack-filter" id="rackFilterStencils" onchange="renderStencils()">
+          <option value="">Todos los racks</option>
+          <option value="r1">R1</option>
+          <option value="r2">R2</option>
+          <option value="r3">R3</option>
+          <option value="r4">R4</option>
+          <option value="r5">R5</option>
+        </select>
         <div class="count-pill"><b id="countStencils">0</b> resultados</div>
         <button class="btn-restore" onclick="askRestore()">&#8635; Restaurar Estatus</button>
         <button class="add-btn" onclick="openFormModal('stencils')">+ Agregar Stencil</button>
@@ -498,20 +534,19 @@
     <!-- DUMMIES VIEW -->
     <div id="view-dummies" style="display:none;">
       <div class="dummies-banner">
-        Este apartado de <b>Dummys</b> está listo para usarse, pero aún no tiene registros cargados. Agrega el primero con el botón de abajo.
+        Este apartado de <b>Dummys</b> es solo de consulta: no se puede agregar, editar ni eliminar desde la interfaz, solo por código.
       </div>
       <div class="toolbar">
         <div class="search-wrap">
           <span class="ico">&#128269;</span>
-          <input type="text" id="searchDummies" placeholder="Buscar por ubicación, no. de parte o JOB..." oninput="renderDummies()">
+          <input type="text" id="searchDummies" placeholder="Buscar por código, no. de parte o descripción..." oninput="renderDummies()">
         </div>
         <div class="count-pill"><b id="countDummies">0</b> resultados</div>
-        <button class="add-btn" onclick="openFormModal('dummies')">+ Agregar Dummy</button>
       </div>
       <div class="rows" id="rowsDummies"></div>
       <div class="empty-state" id="emptyDummies" style="display:none;">
-        <div class="display">Aún no hay dummys</div>
-        <p>Cuando tengas la información de los dummys, agrégalos aquí y podrás buscarlos igual que los stenciles.</p>
+        <div class="display">Sin resultados</div>
+        <p>No hay dummys que coincidan con tu búsqueda.</p>
       </div>
     </div>
 
@@ -533,11 +568,31 @@
     </div>
   </main>
 
-  <footer>TOOLING ROOM · R2/L1 · Datos guardados localmente en este navegador</footer>
+  <footer>
+    <div class="footer-brand">TOOLING ROOM</div>
+    <div class="footer-sub">R1 · R2 · R3 · R4 · R5 &nbsp;—&nbsp; Datos guardados localmente en este navegador</div>
+  </footer>
 </div>
 
 <script>
 const PASSWORD = "9062";
+
+// Reglas de rack: R1, R3, R5 = Top · R2, R4 = Bottom. Solo R3 va bloqueado (sin excepción).
+const RACK_DEFAULT_POSITION = { r1:"top", r2:"bottom", r3:"top", r4:"bottom", r5:"top" };
+const LOCKED_RACKS = ["r1", "r2", "r3", "r4", "r5"];
+
+function getRackKey(loc){
+  const m = String(loc).trim().match(/^r(\d+)/i);
+  return m ? ("r" + m[1]) : null;
+}
+function defaultPositionForLoc(loc){
+  const rack = getRackKey(loc);
+  return (rack && RACK_DEFAULT_POSITION[rack]) || "bottom";
+}
+function isLockedLoc(loc){
+  const rack = getRackKey(loc);
+  return !!(rack && LOCKED_RACKS.includes(rack));
+}
 
 // Seed data: leído de la foto de la rejilla R2/L1. Verifica cada etiqueta contra el rack físico,
 // la letra manuscrita en algunas etiquetas puede tener errores de transcripción.
@@ -616,6 +671,42 @@ function loadData(key, seed){
 }
 function saveData(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
 
+// Rangos completos de racks/niveles. Top o Bottom según la cinta de la foto:
+// cinta AZUL = Top, cinta VERDE = Bottom. R3 es Top sin excepción (bloqueado).
+const LOCATION_SKELETON = [
+  { rack:"R1", level:"L1", from:1, to:36 },
+  { rack:"R1", level:"L2", from:1, to:36 },
+  { rack:"R2", level:"L1", from:1, to:36 },
+  { rack:"R2", level:"L2", from:1, to:36 },
+  { rack:"R3", level:"L1", from:1, to:36 },
+  { rack:"R3", level:"L2", from:1, to:36 },
+  { rack:"R4", level:"L1", from:1, to:36 },
+  { rack:"R4", level:"L2", from:1, to:36 },
+  { rack:"R5", level:"L1", from:1, to:36 },
+  { rack:"R5", level:"L2", from:1, to:36 }
+];
+
+function ensureSkeleton(stencilsArr){
+  const existingLocs = new Set(stencilsArr.map(it => it.loc.toLowerCase()));
+  let changed = false;
+  LOCATION_SKELETON.forEach(group => {
+    for(let n = group.from; n <= group.to; n++){
+      const loc = `${group.rack}/${group.level}/${n}`;
+      if(!existingLocs.has(loc.toLowerCase())){
+        stencilsArr.push({
+          id: 'id_'+Math.random().toString(36).slice(2,10),
+          loc, part:"", job:"",
+          status:"ok", location_status:"resguardado",
+          position: defaultPositionForLoc(loc)
+        });
+        existingLocs.add(loc.toLowerCase());
+        changed = true;
+      }
+    }
+  });
+  return changed;
+}
+
 function mergeSeedByLoc(existing, seed){
   const existingLocs = new Set(existing.map(it => it.loc.toLowerCase()));
   const missing = seed.filter(it => !existingLocs.has(it.loc.toLowerCase()));
@@ -627,8 +718,71 @@ function mergeSeedByLoc(existing, seed){
   return existing;
 }
 
+// Catálogo de modelos de dummys (Top y Bottom), 5 unidades de cada uno.
+// Solo consulta: no se agregan, editan ni eliminan desde la interfaz.
+const DUMMY_MODELS = [
+  {code:"TD001",  desc:"CAIRS DAMPER"},
+  {code:"TM001",  desc:"MSTD"},
+  {code:"TR001",  desc:"ACTUADOR"},
+  {code:"TC001",  desc:"MODULADOR"},
+  {code:"TMC001", desc:"MKC1"},
+  {code:"TS001",  desc:"MSTR"},
+  {code:"TMK001", desc:"L3PO"},
+  {code:"TB001",  desc:"CAIRS BASE"},
+  {code:"BD001",  desc:"CAIRS DAMPER"},
+  {code:"BS001",  desc:"MSTR"},
+  {code:"BMC001", desc:"MKC1"},
+  {code:"BM001",  desc:"MSTD"},
+  {code:"BC001",  desc:"MODULADOR"},
+  {code:"BR001",  desc:"ACTUADOR"},
+  {code:"BMK001", desc:"L3PO"}
+];
+
+function incrementCode(code, offset){
+  const m = String(code).match(/^([A-Za-z]+)(\d+)$/);
+  if(!m) return code + (offset + 1);
+  const prefix = m[1];
+  const digits = m[2];
+  const width = digits.length;
+  const newNum = parseInt(digits, 10) + offset;
+  return prefix + String(newNum).padStart(width, '0');
+}
+
+function buildSeedDummies(){
+  const arr = [];
+  DUMMY_MODELS.forEach(m => {
+    for(let n = 0; n < 5; n++){
+      const code = incrementCode(m.code, n);
+      arr.push({
+        id: 'id_'+Math.random().toString(36).slice(2,10),
+        loc: code, part: code, job: m.desc,
+        status: "ok", location_status: "resguardado",
+        position: defaultPositionForLoc(code)
+      });
+    }
+  });
+  return arr;
+}
+const SEED_DUMMIES = buildSeedDummies();
+
+function mergeDummiesSeed(existing, seed){
+  const existingLocs = new Set(existing.map(it => it.loc.toLowerCase()));
+  const missing = seed.filter(it => !existingLocs.has(it.loc.toLowerCase()));
+  if(missing.length){
+    const merged = existing.concat(missing);
+    saveData('tr_dummies', merged);
+    return merged;
+  }
+  return existing;
+}
+
 let stencils = mergeSeedByLoc(loadData("tr_stencils", SEED_STENCILS), SEED_STENCILS);
-let dummies  = loadData("tr_dummies", []);
+if(ensureSkeleton(stencils)){ saveData('tr_stencils', stencils); }
+function stripOldDummyScheme(existing){
+  return existing.filter(it => !/^[A-Za-z]+\d+-\d+$/.test(String(it.loc).trim()));
+}
+
+let dummies  = mergeDummiesSeed(stripOldDummyScheme(loadData("tr_dummies", SEED_DUMMIES)), SEED_DUMMIES);
 let sockets  = loadData("tr_sockets", SEED_SOCKETS);
 let currentTab = "stencils";
 let formContext = "stencils";
@@ -698,7 +852,8 @@ function locationMatches(loc, q){
   return nextChar === '' || !/[0-9]/.test(nextChar);
 }
 
-function matches(item, q){
+function matches(item, q, rackFilter){
+  if(rackFilter && getRackKey(item.loc) !== rackFilter) return false;
   if(!q) return true;
   q = q.trim();
   const ql = q.toLowerCase();
@@ -710,10 +865,12 @@ function matches(item, q){
 function rowHTML(item, kind){
   const status = item.status || 'ok';
   const locStatus = item.location_status || 'resguardado';
-  const isR2 = /^r2/i.test(item.loc.trim());
-  const position = isR2 ? 'bottom' : (item.position || 'bottom');
-  const positionPill = isR2
-    ? `<span class="status-pill bottom locked" title="Los stenciles R2 siempre son Bottom">${POSITION_LABELS.bottom}</span>`
+  const rack = (getRackKey(item.loc) || '').toUpperCase();
+  const locked = isLockedLoc(item.loc);
+  const defaultPos = defaultPositionForLoc(item.loc);
+  const position = locked ? defaultPos : (item.position || defaultPos);
+  const positionPill = locked
+    ? `<span class="status-pill ${defaultPos} locked" title="Los stenciles ${rack} siempre son ${POSITION_LABELS[defaultPos]}">${POSITION_LABELS[defaultPos]}</span>`
     : `<span class="status-pill ${position}" title="Toca para cambiar Top/Bottom" onclick="cyclePosition('${kind}','${item.id}')">${POSITION_LABELS[position]}</span>`;
   const statusBar = kind === 'sockets' ? '' : `
       <div class="status-bar">
@@ -731,13 +888,9 @@ function rowHTML(item, kind){
     <div class="entry-card">
       <div class="entry-top">
         <div class="loc-chip">${escapeHtml(item.loc)}</div>
-        <div class="entry-field"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
-        <div class="entry-field"><span class="field-tag">JOB</span><span class="val">${escapeHtml(item.job)}</span></div>
+        <div class="entry-field"><span class="field-tag">No. de Parte</span><span class="val">${item.part ? escapeHtml(item.part) : '<i style="color:var(--steel);font-style:normal;">— sin dato —</i>'}</span></div>
+        <div class="entry-field"><span class="field-tag">${kind === 'dummies' ? 'Descripción' : 'JOB'}</span><span class="val">${item.job ? escapeHtml(item.job) : '<i style="color:var(--steel);font-style:normal;">— sin dato —</i>'}</span></div>
         <div class="entry-spacer"></div>
-        <div class="entry-actions">
-          <button class="icon-btn" title="Editar" onclick="editEntry('${kind}','${item.id}')">&#9998;</button>
-          <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('${kind}','${item.id}')">&#10005;</button>
-        </div>
       </div>${statusBar}
     </div>`;
 }
@@ -746,12 +899,8 @@ function rowSocketHTML(item){
   return `
     <div class="socket-card">
       <div class="loc-chip">${escapeHtml(item.loc)}</div>
-      <div class="entry-field"><span class="field-tag">No. de Parte</span><span class="val">${escapeHtml(item.part)}</span></div>
+      <div class="entry-field"><span class="field-tag">No. de Parte</span><span class="val">${item.part ? escapeHtml(item.part) : '<i style="color:var(--steel);font-style:normal;">— sin dato —</i>'}</span></div>
       <div class="entry-spacer"></div>
-      <div class="entry-actions">
-        <button class="icon-btn" title="Editar" onclick="editEntry('sockets','${item.id}')">&#9998;</button>
-        <button class="icon-btn del" title="Eliminar" onclick="deleteEntry('sockets','${item.id}')">&#10005;</button>
-      </div>
     </div>`;
 }
 
@@ -778,8 +927,9 @@ function cyclePosition(kind, id){
   const arr = kind === 'stencils' ? stencils : dummies;
   const item = arr.find(x => x.id === id);
   if(!item) return;
-  if(/^r2/i.test(item.loc.trim())) return;
-  item.position = (item.position || 'bottom') === 'bottom' ? 'top' : 'bottom';
+  if(isLockedLoc(item.loc)) return;
+  const defaultPos = defaultPositionForLoc(item.loc);
+  item.position = (item.position || defaultPos) === 'bottom' ? 'top' : 'bottom';
   saveData(kind === 'stencils' ? 'tr_stencils' : 'tr_dummies', arr);
   kind === 'stencils' ? renderStencils() : renderDummies();
 }
@@ -806,10 +956,28 @@ function ensureIds(arr){
   return arr;
 }
 
+function parseLocParts(loc){
+  const m = String(loc).trim().match(/^r(\d+)\/l(\d+)\/(\d+)/i);
+  if(!m) return null;
+  return { rack: parseInt(m[1], 10), level: parseInt(m[2], 10), num: parseInt(m[3], 10) };
+}
+function compareLoc(a, b){
+  const pa = parseLocParts(a);
+  const pb = parseLocParts(b);
+  if(!pa && !pb) return String(a).localeCompare(String(b));
+  if(!pa) return 1;
+  if(!pb) return -1;
+  if(pa.rack !== pb.rack) return pa.rack - pb.rack;
+  if(pa.level !== pb.level) return pa.level - pb.level;
+  return pa.num - pb.num;
+}
+
 function renderStencils(){
   ensureIds(stencils);
   const q = document.getElementById('searchStencils').value;
-  const filtered = stencils.filter(it => matches(it, q));
+  const rackFilter = document.getElementById('rackFilterStencils').value;
+  const filtered = stencils.filter(it => matches(it, q, rackFilter))
+                            .sort((a, b) => compareLoc(a.loc, b.loc));
   document.getElementById('countStencils').textContent = filtered.length;
   document.getElementById('rowsStencils').innerHTML = filtered.map(it => rowHTML(it,'stencils')).join('');
   document.getElementById('emptyStencils').style.display = filtered.length ? 'none' : 'block';
@@ -818,7 +986,7 @@ function renderStencils(){
 function renderDummies(){
   ensureIds(dummies);
   const q = document.getElementById('searchDummies').value;
-  const filtered = dummies.filter(it => matches(it, q));
+  const filtered = dummies.filter(it => matches(it, q)).sort((a, b) => compareLoc(a.loc, b.loc));
   document.getElementById('countDummies').textContent = filtered.length;
   document.getElementById('rowsDummies').innerHTML = filtered.map(it => rowHTML(it,'dummies')).join('');
   document.getElementById('emptyDummies').style.display = filtered.length ? 'none' : 'block';
@@ -839,16 +1007,15 @@ function renderSockets(){
   document.getElementById('emptySockets').style.display = filtered.length ? 'none' : 'block';
 }
 
-// ---------- ADD / EDIT / DELETE ----------
+// ---------- ALTA DE REGISTROS (editar/eliminar solo por código) ----------
 const KIND_LABELS = { stencils: 'Stencil', dummies: 'Dummy', sockets: 'Socket' };
 
-function openFormModal(kind, editItem){
+function openFormModal(kind){
   formContext = kind;
-  document.getElementById('formTitle').textContent = (editItem ? 'Editar ' : 'Agregar ') + KIND_LABELS[kind];
-  document.getElementById('editId').value = editItem ? editItem.id : '';
-  document.getElementById('fLoc').value = editItem ? editItem.loc : '';
-  document.getElementById('fPart').value = editItem ? editItem.part : '';
-  document.getElementById('fJob').value = editItem ? (editItem.job || '') : '';
+  document.getElementById('formTitle').textContent = 'Agregar ' + KIND_LABELS[kind];
+  document.getElementById('fLoc').value = '';
+  document.getElementById('fPart').value = '';
+  document.getElementById('fJob').value = '';
   document.getElementById('fJobRow').style.display = kind === 'sockets' ? 'none' : 'block';
   document.getElementById('formModal').classList.add('show');
   setTimeout(()=>document.getElementById('fLoc').focus(), 50);
@@ -870,37 +1037,26 @@ function saveEntry(){
     alert(isSockets ? 'Completa ubicación y no. de parte.' : 'Completa ubicación, no. de parte y JOB.');
     return;
   }
-  const id = document.getElementById('editId').value;
   const arr = arrFor(formContext);
+  const existingIdx = arr.findIndex(x => x.loc.toLowerCase() === loc.toLowerCase());
 
-  if(id){
-    const idx = arr.findIndex(x => x.id === id);
-    if(idx > -1){
-      arr[idx] = isSockets ? {...arr[idx], loc, part} : {...arr[idx], loc, part, job};
-    }
+  if(existingIdx > -1){
+    arr[existingIdx] = isSockets
+      ? {...arr[existingIdx], part}
+      : {...arr[existingIdx], part, job};
   } else {
     const newItem = { id: 'id_'+Math.random().toString(36).slice(2,10), loc, part };
-    if(!isSockets){ newItem.job = job; newItem.status = 'ok'; newItem.location_status = 'resguardado'; newItem.position = 'bottom'; }
+    if(!isSockets){
+      newItem.job = job;
+      newItem.status = 'ok';
+      newItem.location_status = 'resguardado';
+      newItem.position = defaultPositionForLoc(loc);
+    }
     arr.push(newItem);
   }
   saveData(storeKeyFor(formContext), arr);
   closeFormModal();
   renderFor(formContext);
-}
-
-function editEntry(kind, id){
-  const item = arrFor(kind).find(x => x.id === id);
-  if(item) openFormModal(kind, item);
-}
-
-function deleteEntry(kind, id){
-  if(!confirm('¿Eliminar este registro?')) return;
-  const filtered = arrFor(kind).filter(x => x.id !== id);
-  if(kind === 'stencils') stencils = filtered;
-  else if(kind === 'dummies') dummies = filtered;
-  else sockets = filtered;
-  saveData(storeKeyFor(kind), filtered);
-  renderFor(kind);
 }
 </script>
 </body>
